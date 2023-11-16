@@ -27,7 +27,7 @@ class EngagementExtension implements QueryCollectionExtensionInterface
         if (Engagement::class !== $resourceClass) {
             return;
         }
-        // If an "active" Filter is nit expressly requested, apply a restriction to the QueryBuilder
+        // If an "active" Filter is not expressly requested, apply a restriction to the QueryBuilder
         if ($context['filters']['active'] ?? null) {
             return;
         }
