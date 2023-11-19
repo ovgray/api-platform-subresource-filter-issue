@@ -20,9 +20,10 @@ class EngagementExtension implements QueryCollectionExtensionInterface
         Operation $operation = null,
         array $context = []
     ): void {
-        $this->addWhere($queryBuilder, $resourceClass, $context);
+        $this->addWhere($queryBuilder, $queryNameGenerator, $resourceClass, $context);
     }
-    private function addWhere(QueryBuilder $queryBuilder, string $resourceClass, array $context)
+    private function addWhere(QueryBuilder $queryBuilder, QueryNameGeneratorInterface $queryNameGenerator,
+        string $resourceClass, array $context)
     {
         if (Engagement::class !== $resourceClass) {
             return;
@@ -31,9 +32,9 @@ class EngagementExtension implements QueryCollectionExtensionInterface
         if ($context['filters']['active'] ?? null) {
             return;
         }
-
         $rootAlias = $queryBuilder->getRootAliases()[0];
-        $queryBuilder->andWhere(sprintf('%s.active = :active', $rootAlias));
-        $queryBuilder->setParameter('active', true);
+        $parameterName = $queryNameGenerator->generateParameterName('active');
+        $queryBuilder->andWhere(sprintf('%s.active = :%s', $rootAlias, $parameterName));
+        $queryBuilder->setParameter($parameterName, true);
     }
 }
