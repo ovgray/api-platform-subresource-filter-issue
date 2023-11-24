@@ -18,8 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
     operations: [new GetCollection()],
     uriVariables: ['code' => new Link(fromProperty: 'engagements', fromClass: Organization::class)],
 )]
+#[ApiFilter(BooleanFilter::class, properties: ['active'])]
 #[ApiFilter(filterClass: EngagementBagItemQuantityFilter::class)]
-#[ApiFilter(BooleanFilter::class, properties: ['isActive'])]
 class Engagement
 {
     #[ORM\Id]

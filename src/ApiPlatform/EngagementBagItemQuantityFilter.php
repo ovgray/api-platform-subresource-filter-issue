@@ -23,26 +23,29 @@ class EngagementBagItemQuantityFilter extends AbstractFilter
         Operation $operation = null,
         array $context = []
     ): void {
-        if ('min' !== $property ||
-            empty($value) ||
-            Engagement::class !== $resourceClass
+        if (
+            Engagement::class !== $resourceClass ||
+            'min' !== $property ||
+            empty($value)
         ) {
             return;
         }
-
         $rootAlias = $queryBuilder->getRootAliases()[0];
         $value = (int) $value;
-        $queryBuilder
-            ->join($rootAlias.'.bag', 'bg')
-            ->join('bg.items', 'it');
+        $queryBuilder->join($rootAlias.'.bag', 'bg');
+        if ($value) {
+            $queryBuilder->join('bg.items', 'it');
+        } else {
+            $queryBuilder->leftJoin('bg.items', 'it');
+        }
         if (1 < $value) {
             $parameterName = $queryNameGenerator->generateParameterName('min');
             $queryBuilder->groupBy($rootAlias.'.id')
                 ->having(sprintf('count(it.name) >= :%s', $parameterName))
                 ->setParameter($parameterName, $value)
             ;
-//            dd($queryBuilder->getDQL());
         }
+//        dd($value, $queryBuilder->getDQL());
     }
 
     public function getDescription(string $resourceClass): array

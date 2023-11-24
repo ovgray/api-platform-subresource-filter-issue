@@ -17,34 +17,25 @@ class EngagementResourceTest extends ApiTestCase
 
     private EntityManagerInterface $em;
 
-    public function testGetCollectionWithNoActiveEngagement(): void
+    public function testGetCollectionWithNoFilter(): void
     {
         $client = static::createClient();
 
         $client->request('GET', '/api/engagements');
         $this->assertResponseIsSuccessful();
-        $this->assertJsonContains(['hydra:totalItems' => 0]); // because not active
-        //
-        $client->request('GET', '/api/organizations/blue/engagements');
-        $this->assertResponseIsSuccessful();
-        $this->assertJsonContains(['hydra:totalItems' => 0]); // because not active
+        $this->assertJsonContains(['hydra:totalItems' => 1]);
     }
 
-    public function testGetCollectionWithActiveEngagement(): void
+    public function testGetCollectionWithActiveFilter(): void
     {
         $this->engagement1->setActive(true);
         $this->em->flush();
         $client = static::createClient();
 
-        $client->request('GET', '/api/engagements');
-        $this->assertResponseIsSuccessful();
-        $this->assertJsonContains(['hydra:totalItems' => 1]);
-
-        $client->request('GET', '/api/organizations/blue/engagements');
+        $client->request('GET', '/api/engagements?active=true');
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains(['hydra:totalItems' => 1]);
     }
-
     public function testGetCollectionWithMinFilter(): void
     {
         $this->engagement1->setActive(true);
@@ -71,6 +62,51 @@ class EngagementResourceTest extends ApiTestCase
         $this->assertJsonContains(['hydra:totalItems' => 0]);
     }
 
+   public function testGetCollectionWithMinAndActiveFilters(): void
+    {
+        $this->engagement1->setActive(true);
+        $item1 = new Item();
+        $item1->setName('Item1');
+        $item2 = new Item();
+        $item2->setName('Item2');
+        $this->engagement1->getBag()->addItem($item1);
+        $this->engagement1->getBag()->addItem($item2);
+        $this->em->flush();
+
+        $client = static::createClient();
+
+        $client->request('GET', '/api/engagements?active=true&min=1');
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains(['hydra:totalItems' => 1]);
+
+        $client->request('GET', '/api/engagements?active=true&min=2');
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains(['hydra:totalItems' => 1]);
+
+        $client->request('GET', '/api/engagements?active=true&min=3');
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains(['hydra:totalItems' => 0]);
+    }
+
+    public function testGetSubresourceCollectionWithNoFilter(): void
+    {
+        $client = static::createClient();
+
+        $client->request('GET', '/api/organizations/blue/engagements');
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains(['hydra:totalItems' => 1]);
+    }
+
+    public function testGetSubresourceCollectionWithActiveFilter(): void
+    {
+        $this->engagement1->setActive(true);
+        $this->em->flush();
+        $client = static::createClient();
+
+        $client->request('GET', '/api/organizations/blue/engagements?active=true');
+        $this->assertResponseIsSuccessful();
+        $this->assertJsonContains(['hydra:totalItems' => 1]);
+    }
     public function testGetSubresourceCollectionWithMinFilter(): void
     {
         $this->engagement1->setActive(true);
@@ -97,7 +133,7 @@ class EngagementResourceTest extends ApiTestCase
         $this->assertJsonContains(['hydra:totalItems' => 0]);
     }
 
-    public function testGetSubresourceCollectionWithMinAndActiveFilters(): void
+   public function testGetSubresourceCollectionWithMinAndActiveFilters(): void
     {
         $this->engagement1->setActive(true);
         $item1 = new Item();
@@ -110,15 +146,15 @@ class EngagementResourceTest extends ApiTestCase
 
         $client = static::createClient();
 
-        $client->request('GET', '/api/organizations/blue/engagements?active=1&min=1');
+        $client->request('GET', '/api/organizations/blue/engagements?active=true&min=1');
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains(['hydra:totalItems' => 1]);
 
-        $client->request('GET', '/api/organizations/blue/engagements?active=1&min=2');
+        $client->request('GET', '/api/organizations/blue/engagements?active=true&min=2');
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains(['hydra:totalItems' => 1]);
 
-        $client->request('GET', '/api/organizations/blue/engagements?active=1&min=3');
+        $client->request('GET', '/api/organizations/blue/engagements?active=true&min=3');
         $this->assertResponseIsSuccessful();
         $this->assertJsonContains(['hydra:totalItems' => 0]);
     }
@@ -143,5 +179,6 @@ class EngagementResourceTest extends ApiTestCase
         $this->engagement1->setPerson($person1);
         $this->engagement1->setBag($bag1);
         $org1->addEngagement($this->engagement1);
+        $this->em->flush();
     }
 }
